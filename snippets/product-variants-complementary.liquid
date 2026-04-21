@@ -1,5 +1,10 @@
 {% comment %}
   Products as Variants (Complementary Products as Color Swatches)
+  Simple stable version:
+  - current product + complementary products
+  - hover updates label
+  - white swatches visible
+  - handles the common 2-color case cleanly
 {% endcomment %}
 
 <product-recommendations
@@ -13,11 +18,9 @@
 
   {% if current_color_raw %}
     {% assign v = current_color_raw.value %}
-
     {% if v.color %}
       {% assign current_color = v.color %}
     {% endif %}
-
     {% if v.label %}
       {% assign current_color_label = v.label %}
     {% elsif v.handle %}
@@ -26,10 +29,30 @@
   {% endif %}
 
   {% if current_color != blank %}
-    <div
-      class="product-variants-complementary__inner"
-      {{ block.shopify_attributes }}
-    >
+    {%- assign first_rec = recommendations.products.first -%}
+    {%- assign rec_color = '' -%}
+    {%- assign rec_color_label = '' -%}
+    {%- assign rec_url = '' -%}
+    {%- assign rec_title = '' -%}
+
+    {% if recommendations.performed and recommendations.products_count > 0 and first_rec and first_rec.id != product.id %}
+      {%- assign rec_color_raw = first_rec.metafields.custom.product_color -%}
+      {% if rec_color_raw %}
+        {% assign rv = rec_color_raw.value %}
+        {% if rv.color %}
+          {% assign rec_color = rv.color %}
+        {% endif %}
+        {% if rv.label %}
+          {% assign rec_color_label = rv.label %}
+        {% elsif rv.handle %}
+          {% assign rec_color_label = rv.handle %}
+        {% endif %}
+      {% endif %}
+      {% assign rec_url = first_rec.url %}
+      {% assign rec_title = first_rec.title %}
+    {% endif %}
+
+    <div class="product-variants-complementary__inner" {{ block.shopify_attributes }}>
       <p class="product-variants-complementary__label">
         {{ block.settings.heading }}:
         <span
@@ -42,10 +65,30 @@
       </p>
 
       <ul class="product-variants-complementary__list" role="list">
+        {% if rec_color != blank and rec_color_label != blank and rec_color_label < current_color_label %}
+          <li>
+            <a
+              href="{{ rec_url }}"
+              class="variant-swatch"
+              data-color-label="{{ rec_color_label | escape }}"
+              aria-label="{{ rec_title }} — {{ rec_color_label | escape }}"
+              onmouseenter="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
+              onmouseleave="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
+              onfocus="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
+              onblur="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
+            >
+              <span
+                class="variant-swatch__color"
+                style="background-color: {{ rec_color | strip | escape }};"
+              ></span>
+            </a>
+          </li>
+        {% endif %}
+
         <li>
           <div
             class="variant-swatch variant-swatch--active"
-            aria-label="{{ product.title }} — {{ current_color_label | default: 'Current color' }}"
+            aria-label="{{ product.title }} — {{ current_color_label | default: 'Current color' | escape }}"
           >
             <span
               class="variant-swatch__color"
@@ -54,48 +97,24 @@
           </div>
         </li>
 
-        {% if recommendations.performed and recommendations.products_count > 0 %}
-          {% for rec in recommendations.products %}
-            {% unless rec.id == product.id %}
-              {% assign color_raw = rec.metafields.custom.product_color %}
-              {% assign color_value = '' %}
-              {% assign color_label = '' %}
-
-              {% if color_raw %}
-                {% assign v = color_raw.value %}
-
-                {% if v.color %}
-                  {% assign color_value = v.color %}
-                {% endif %}
-
-                {% if v.label %}
-                  {% assign color_label = v.label %}
-                {% elsif v.handle %}
-                  {% assign color_label = v.handle %}
-                {% endif %}
-              {% endif %}
-
-              {% if color_value != blank %}
-                <li>
-                  <a
-                    href="{{ rec.url }}"
-                    class="variant-swatch"
-                    data-color-label="{{ color_label | default: 'Color option' | escape }}"
-                    aria-label="{{ rec.title }} — {{ color_label | default: 'Color option' }}"
-                    onmouseenter="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
-                    onmouseleave="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
-                    onfocus="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
-                    onblur="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
-                  >
-                    <span
-                      class="variant-swatch__color"
-                      style="background-color: {{ color_value | strip | escape }};"
-                    ></span>
-                  </a>
-                </li>
-              {% endif %}
-            {% endunless %}
-          {% endfor %}
+        {% if rec_color != blank and rec_color_label != blank and rec_color_label >= current_color_label %}
+          <li>
+            <a
+              href="{{ rec_url }}"
+              class="variant-swatch"
+              data-color-label="{{ rec_color_label | escape }}"
+              aria-label="{{ rec_title }} — {{ rec_color_label | escape }}"
+              onmouseenter="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
+              onmouseleave="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
+              onfocus="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
+              onblur="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
+            >
+              <span
+                class="variant-swatch__color"
+                style="background-color: {{ rec_color | strip | escape }};"
+              ></span>
+            </a>
+          </li>
         {% endif %}
       </ul>
     </div>
