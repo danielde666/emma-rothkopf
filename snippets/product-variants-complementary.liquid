@@ -1,6 +1,10 @@
 {% comment %}
   Products as Variants (Complementary Products as Color Swatches)
-  Fixed alphabetical order by color label, with current product in-place.
+  Final version:
+  - renders current + complementary swatches
+  - sorts alphabetically in JS by color label
+  - keeps row hidden until sorting is complete
+  - updates label on hover/focus
 {% endcomment %}
 
 <product-recommendations
@@ -10,8 +14,8 @@
   {%- assign current_color_raw = product.metafields.custom.product_color -%}
   {%- assign current_color = '' -%}
   {%- assign current_color_label = '' -%}
-  {%- assign current_color_label_downcase = '' -%}
   {%- assign label_id = 'product-variants-color-label-' | append: section.id | append: '-' | append: block.id -%}
+  {%- assign list_id = 'product-variants-list-' | append: section.id | append: '-' | append: block.id -%}
 
   {% if current_color_raw %}
     {% assign v = current_color_raw.value %}
@@ -27,67 +31,7 @@
     {% endif %}
   {% endif %}
 
-  {% assign current_color_label_downcase = current_color_label | downcase | strip %}
-
   {% if current_color != blank %}
-    {%- capture swatches_before -%}{%- endcapture -%}
-    {%- capture swatches_after -%}{%- endcapture -%}
-
-    {% if recommendations.performed and recommendations.products_count > 0 %}
-      {% for rec in recommendations.products %}
-        {% unless rec.id == product.id %}
-          {% assign color_raw = rec.metafields.custom.product_color %}
-          {% assign color_value = '' %}
-          {% assign color_label = '' %}
-          {% assign color_label_downcase = '' %}
-
-          {% if color_raw %}
-            {% assign v = color_raw.value %}
-
-            {% if v.color %}
-              {% assign color_value = v.color %}
-            {% endif %}
-
-            {% if v.label %}
-              {% assign color_label = v.label %}
-            {% elsif v.handle %}
-              {% assign color_label = v.handle %}
-            {% endif %}
-          {% endif %}
-
-          {% assign color_label_downcase = color_label | downcase | strip %}
-
-          {% if color_value != blank and color_label != blank %}
-            {%- capture swatch_markup -%}
-              <li>
-                <a
-                  href="{{ rec.url }}"
-                  class="variant-swatch"
-                  data-color-label="{{ color_label | escape }}"
-                  aria-label="{{ rec.title }} — {{ color_label | escape }}"
-                  onmouseenter="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
-                  onmouseleave="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
-                  onfocus="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
-                  onblur="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
-                >
-                  <span
-                    class="variant-swatch__color"
-                    style="background-color: {{ color_value | strip | escape }};"
-                  ></span>
-                </a>
-              </li>
-            {%- endcapture -%}
-
-            {% if color_label_downcase < current_color_label_downcase %}
-              {% assign swatches_before = swatches_before | append: swatch_markup %}
-            {% else %}
-              {% assign swatches_after = swatches_after | append: swatch_markup %}
-            {% endif %}
-          {% endif %}
-        {% endunless %}
-      {% endfor %}
-    {% endif %}
-
     <div class="product-variants-complementary__inner" {{ block.shopify_attributes }}>
       <p class="product-variants-complementary__label">
         {{ block.settings.heading }}:
@@ -100,10 +44,16 @@
         </span>
       </p>
 
-      <ul class="product-variants-complementary__list" role="list">
-        {{ swatches_before }}
-
-        <li>
+      <ul
+        id="{{ list_id }}"
+        class="product-variants-complementary__list product-variants-complementary__list--hidden"
+        role="list"
+      >
+        <li
+          class="product-variants-complementary__item"
+          data-color-label="{{ current_color_label | strip | escape }}"
+          data-is-current="true"
+        >
           <div
             class="variant-swatch variant-swatch--active"
             aria-label="{{ product.title }} — {{ current_color_label | default: 'Current color' | escape }}"
@@ -115,7 +65,53 @@
           </div>
         </li>
 
-        {{ swatches_after }}
+        {% if recommendations.performed and recommendations.products_count > 0 %}
+          {% for rec in recommendations.products %}
+            {% unless rec.id == product.id %}
+              {% assign color_raw = rec.metafields.custom.product_color %}
+              {% assign color_value = '' %}
+              {% assign color_label = '' %}
+
+              {% if color_raw %}
+                {% assign v = color_raw.value %}
+
+                {% if v.color %}
+                  {% assign color_value = v.color %}
+                {% endif %}
+
+                {% if v.label %}
+                  {% assign color_label = v.label %}
+                {% elsif v.handle %}
+                  {% assign color_label = v.handle %}
+                {% endif %}
+              {% endif %}
+
+              {% if color_value != blank and color_label != blank %}
+                <li
+                  class="product-variants-complementary__item"
+                  data-color-label="{{ color_label | strip | escape }}"
+                  data-is-current="false"
+                >
+                  <a
+                    href="{{ rec.url }}"
+                    class="variant-swatch"
+                    data-color-label="{{ color_label | escape }}"
+                    aria-label="{{ rec.title }} — {{ color_label | escape }}"
+                    onmouseenter="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
+                    onmouseleave="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
+                    onfocus="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
+                    onblur="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
+                  >
+                    <span
+                      class="variant-swatch__color"
+                      style="background-color: {{ color_value | strip | escape }};"
+                    ></span>
+                  </a>
+                </li>
+              {% endif %}
+            {% endunless %}
+          {% endfor %}
+        {% endif %}
       </ul>
     </div>
 
@@ -132,6 +128,10 @@
         margin: 0;
         list-style: none;
         flex-wrap: wrap;
+      }
+
+      .product-variants-complementary__list--hidden {
+        visibility: hidden;
       }
 
       .variant-swatch {
@@ -155,5 +155,31 @@
         box-sizing: border-box;
       }
     </style>
+
+    <script>
+      (function () {
+        var list = document.getElementById('{{ list_id }}');
+        if (!list) return;
+
+        var items = Array.prototype.slice.call(
+          list.querySelectorAll('.product-variants-complementary__item')
+        );
+
+        items.sort(function (a, b) {
+          var aLabel = (a.dataset.colorLabel || '').toLowerCase().trim();
+          var bLabel = (b.dataset.colorLabel || '').toLowerCase().trim();
+
+          if (aLabel < bLabel) return -1;
+          if (aLabel > bLabel) return 1;
+          return 0;
+        });
+
+        items.forEach(function (item) {
+          list.appendChild(item);
+        });
+
+        list.classList.remove('product-variants-complementary__list--hidden');
+      })();
+    </script>
   {% endif %}
 </product-recommendations>
