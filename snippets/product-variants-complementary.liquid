@@ -8,7 +8,7 @@
 {% endcomment %}
 
 <product-recommendations
-  class="product-variants-complementary is-hidden"
+  class="product-variants-complementary"
   data-url="{{ routes.product_recommendations_url }}?section_id={{ section.id }}&product_id={{ product.id }}&limit={{ block.settings.product_list_limit }}&intent=complementary"
 >
   {%- assign current_color_raw = product.metafields.custom.product_color -%}
@@ -118,32 +118,7 @@
         {% endif %}
       </ul>
 
-    <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('product-recommendations.product-variants-complementary').forEach(function (el) {
-      var timeoutId = null;
-      var observer = null;
-
-      function revealWhenSettled() {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(function () {
-          el.classList.remove('is-hidden');
-          if (observer) observer.disconnect();
-        }, 30);
-      }
-
-      if (el.innerHTML.trim() !== '') {
-        revealWhenSettled();
-      }
-
-      observer = new MutationObserver(function () {
-        revealWhenSettled();
-      });
-
-      observer.observe(el, { childList: true, subtree: true });
-    });
-  });
-</script>
+  
     </div>
 
     <style>
