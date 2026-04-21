@@ -64,7 +64,7 @@
         </span>
       </p>
 
-      <ul class="product-variants-complementary__list" role="list">
+      <ul class="product-variants-complementary__list is-hidden" role="list">
         {% if rec_color != blank and rec_color_label != blank and rec_color_label < current_color_label %}
           <li>
             <a
@@ -117,9 +117,19 @@
           </li>
         {% endif %}
       </ul>
+      <script>
+        (function(){
+            var list = document.currentScript.previousElementSibling;
+            if (!list) return;
+            list.classList.remove('is-hidden');
+        })();
+        </script>
     </div>
 
     <style>
+        .product-variants-complementary__list.is-hidden {
+        opacity: 0;
+        }
       .product-variants-complementary__label {
         margin-bottom: 6px;
         font-size: 14px;
