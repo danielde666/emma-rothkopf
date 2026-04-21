@@ -24,14 +24,17 @@
     {% endif %}
   {% endif %}
 
-  {%- comment -%}
-    If the current product has no usable color swatch, show nothing.
-  {%- endcomment -%}
   {% if current_color != blank %}
-
-    <div class="product-variants-complementary__inner" {{ block.shopify_attributes }}>
+    <div
+      class="product-variants-complementary__inner"
+      data-current-color-label="{{ current_color_label | default: 'Select' | escape }}"
+      {{ block.shopify_attributes }}
+    >
       <p class="product-variants-complementary__label">
-        {{ block.settings.heading }}: {{ current_color_label | default: 'Select' }}
+        {{ block.settings.heading }}:
+        <span class="product-variants-complementary__label-value">
+          {{ current_color_label | default: 'Select' }}
+        </span>
       </p>
 
       <ul class="product-variants-complementary__list" role="list">
@@ -74,6 +77,7 @@
                     href="{{ rec.url }}"
                     class="variant-swatch"
                     aria-label="{{ rec.title }} — {{ color_label | default: 'Color option' }}"
+                    data-color-label="{{ color_label | default: 'Color option' | escape }}"
                   >
                     <span
                       class="variant-swatch__color"
@@ -120,8 +124,43 @@
         height: 24px;
         border-radius: 4px;
         display: block;
+        border: 1px solid #d9d9d9;
+        box-sizing: border-box;
       }
     </style>
 
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var containers = document.querySelectorAll('.product-variants-complementary__inner');
+
+        containers.forEach(function (container) {
+          var labelValue = container.querySelector('.product-variants-complementary__label-value');
+          if (!labelValue) return;
+
+          var defaultLabel = container.dataset.currentColorLabel || labelValue.textContent.trim();
+          var swatches = container.querySelectorAll('.variant-swatch[data-color-label]');
+
+          swatches.forEach(function (swatch) {
+            var hoverLabel = swatch.dataset.colorLabel || defaultLabel;
+
+            swatch.addEventListener('mouseenter', function () {
+              labelValue.textContent = hoverLabel;
+            });
+
+            swatch.addEventListener('focus', function () {
+              labelValue.textContent = hoverLabel;
+            });
+
+            swatch.addEventListener('mouseleave', function () {
+              labelValue.textContent = defaultLabel;
+            });
+
+            swatch.addEventListener('blur', function () {
+              labelValue.textContent = defaultLabel;
+            });
+          });
+        });
+      });
+    </script>
   {% endif %}
 </product-recommendations>
