@@ -1,6 +1,6 @@
 {% comment %}
   Products as Variants (Complementary Products as Color Swatches)
-  Fixed alphabetical order by color label.
+  Fixed alphabetical order by color label, with current product in-place.
 {% endcomment %}
 
 <product-recommendations
@@ -10,6 +10,7 @@
   {%- assign current_color_raw = product.metafields.custom.product_color -%}
   {%- assign current_color = '' -%}
   {%- assign current_color_label = '' -%}
+  {%- assign current_color_label_downcase = '' -%}
   {%- assign label_id = 'product-variants-color-label-' | append: section.id | append: '-' | append: block.id -%}
 
   {% if current_color_raw %}
@@ -26,41 +27,66 @@
     {% endif %}
   {% endif %}
 
+  {% assign current_color_label_downcase = current_color_label | downcase | strip %}
+
   {% if current_color != blank %}
-    {%- capture swatches_markup -%}
-      {%- comment -%} Current product first into the sortable string list {%- endcomment -%}
-      {{ current_color_label | downcase }}|||1|||{{ current_color_label | escape }}|||{{ current_color | strip | escape }}|||{{ product.url }}|||{{ product.title | escape }}%%%
+    {%- capture swatches_before -%}{%- endcapture -%}
+    {%- capture swatches_after -%}{%- endcapture -%}
 
-      {% if recommendations.performed and recommendations.products_count > 0 %}
-        {% for rec in recommendations.products %}
-          {% unless rec.id == product.id %}
-            {% assign color_raw = rec.metafields.custom.product_color %}
-            {% assign color_value = '' %}
-            {% assign color_label = '' %}
+    {% if recommendations.performed and recommendations.products_count > 0 %}
+      {% for rec in recommendations.products %}
+        {% unless rec.id == product.id %}
+          {% assign color_raw = rec.metafields.custom.product_color %}
+          {% assign color_value = '' %}
+          {% assign color_label = '' %}
+          {% assign color_label_downcase = '' %}
 
-            {% if color_raw %}
-              {% assign v = color_raw.value %}
+          {% if color_raw %}
+            {% assign v = color_raw.value %}
 
-              {% if v.color %}
-                {% assign color_value = v.color %}
-              {% endif %}
-
-              {% if v.label %}
-                {% assign color_label = v.label %}
-              {% elsif v.handle %}
-                {% assign color_label = v.handle %}
-              {% endif %}
+            {% if v.color %}
+              {% assign color_value = v.color %}
             {% endif %}
 
-            {% if color_value != blank and color_label != blank %}
-              {{ color_label | downcase }}|||0|||{{ color_label | escape }}|||{{ color_value | strip | escape }}|||{{ rec.url }}|||{{ rec.title | escape }}%%%
+            {% if v.label %}
+              {% assign color_label = v.label %}
+            {% elsif v.handle %}
+              {% assign color_label = v.handle %}
             {% endif %}
-          {% endunless %}
-        {% endfor %}
-      {% endif %}
-    {%- endcapture -%}
+          {% endif %}
 
-    {% assign swatch_items = swatches_markup | split: '%%%' | sort %}
+          {% assign color_label_downcase = color_label | downcase | strip %}
+
+          {% if color_value != blank and color_label != blank %}
+            {%- capture swatch_markup -%}
+              <li>
+                <a
+                  href="{{ rec.url }}"
+                  class="variant-swatch"
+                  data-color-label="{{ color_label | escape }}"
+                  aria-label="{{ rec.title }} — {{ color_label | escape }}"
+                  onmouseenter="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
+                  onmouseleave="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
+                  onfocus="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
+                  onblur="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
+                >
+                  <span
+                    class="variant-swatch__color"
+                    style="background-color: {{ color_value | strip | escape }};"
+                  ></span>
+                </a>
+              </li>
+            {%- endcapture -%}
+
+            {% if color_label_downcase < current_color_label_downcase %}
+              {% assign swatches_before = swatches_before | append: swatch_markup %}
+            {% else %}
+              {% assign swatches_after = swatches_after | append: swatch_markup %}
+            {% endif %}
+          {% endif %}
+        {% endunless %}
+      {% endfor %}
+    {% endif %}
 
     <div class="product-variants-complementary__inner" {{ block.shopify_attributes }}>
       <p class="product-variants-complementary__label">
@@ -75,49 +101,21 @@
       </p>
 
       <ul class="product-variants-complementary__list" role="list">
-        {% for item in swatch_items %}
-          {% if item != blank %}
-            {% assign parts = item | split: '|||' %}
-            {% assign sort_label = parts[0] %}
-            {% assign is_current = parts[1] %}
-            {% assign color_label = parts[2] %}
-            {% assign color_value = parts[3] %}
-            {% assign item_url = parts[4] %}
-            {% assign item_title = parts[5] %}
+        {{ swatches_before }}
 
-            {% if color_value != blank %}
-              <li>
-                {% if is_current == '1' %}
-                  <div
-                    class="variant-swatch variant-swatch--active"
-                    aria-label="{{ item_title }} — {{ color_label }}"
-                  >
-                    <span
-                      class="variant-swatch__color"
-                      style="background-color: {{ color_value }};"
-                    ></span>
-                  </div>
-                {% else %}
-                  <a
-                    href="{{ item_url }}"
-                    class="variant-swatch"
-                    data-color-label="{{ color_label }}"
-                    aria-label="{{ item_title }} — {{ color_label }}"
-                    onmouseenter="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
-                    onmouseleave="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
-                    onfocus="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
-                    onblur="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
-                  >
-                    <span
-                      class="variant-swatch__color"
-                      style="background-color: {{ color_value }};"
-                    ></span>
-                  </a>
-                {% endif %}
-              </li>
-            {% endif %}
-          {% endif %}
-        {% endfor %}
+        <li>
+          <div
+            class="variant-swatch variant-swatch--active"
+            aria-label="{{ product.title }} — {{ current_color_label | default: 'Current color' | escape }}"
+          >
+            <span
+              class="variant-swatch__color"
+              style="background-color: {{ current_color | strip | escape }};"
+            ></span>
+          </div>
+        </li>
+
+        {{ swatches_after }}
       </ul>
     </div>
 
