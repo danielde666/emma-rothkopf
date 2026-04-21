@@ -79,11 +79,13 @@
           {%- case block.type -%}
 
 
+            {%- when '@app' -%}
+              {% render block %}
+
           {%- when 'products_as_variants' -%}
             {% render 'product-variants-complementary', product: product, block: block, section: section %}
 
-            {%- when '@app' -%}
-              {% render block %}
+            
             {%- when 'text' -%}
               <p
                 class="product__text inline-richtext{% if block.settings.text_style == 'uppercase' %} caption-with-letter-spacing{% elsif block.settings.text_style == 'subtitle' %} subtitle{% endif %}"
