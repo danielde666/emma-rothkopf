@@ -1,0 +1,127 @@
+{% comment %}
+  Products as Variants (Complementary Products as Color Swatches)
+{% endcomment %}
+
+<product-recommendations
+  class="product-variants-complementary"
+  data-url="{{ routes.product_recommendations_url }}?section_id={{ section.id }}&product_id={{ product.id }}&limit={{ block.settings.product_list_limit }}&intent=complementary"
+>
+  {%- assign current_color_raw = product.metafields.custom.product_color -%}
+  {%- assign current_color = '' -%}
+  {%- assign current_color_label = '' -%}
+
+  {% if current_color_raw %}
+    {% assign v = current_color_raw.value %}
+
+    {% if v.color %}
+      {% assign current_color = v.color %}
+    {% endif %}
+
+    {% if v.label %}
+      {% assign current_color_label = v.label %}
+    {% elsif v.handle %}
+      {% assign current_color_label = v.handle %}
+    {% endif %}
+  {% endif %}
+
+  {%- comment -%}
+    If the current product has no usable color swatch, show nothing.
+  {%- endcomment -%}
+  {% if current_color != blank %}
+
+    <div class="product-variants-complementary__inner" {{ block.shopify_attributes }}>
+      <p class="product-variants-complementary__label">
+        {{ block.settings.heading }}: {{ current_color_label | default: 'Select' }}
+      </p>
+
+      <ul class="product-variants-complementary__list" role="list">
+        <li>
+          <div
+            class="variant-swatch variant-swatch--active"
+            aria-label="{{ product.title }} — {{ current_color_label | default: 'Current color' }}"
+          >
+            <span
+              class="variant-swatch__color"
+              style="background-color: {{ current_color | strip | escape }};"
+            ></span>
+          </div>
+        </li>
+
+        {% if recommendations.performed and recommendations.products_count > 0 %}
+          {% for rec in recommendations.products %}
+            {% unless rec.id == product.id %}
+              {% assign color_raw = rec.metafields.custom.product_color %}
+              {% assign color_value = '' %}
+              {% assign color_label = '' %}
+
+              {% if color_raw %}
+                {% assign v = color_raw.value %}
+
+                {% if v.color %}
+                  {% assign color_value = v.color %}
+                {% endif %}
+
+                {% if v.label %}
+                  {% assign color_label = v.label %}
+                {% elsif v.handle %}
+                  {% assign color_label = v.handle %}
+                {% endif %}
+              {% endif %}
+
+              {% if color_value != blank %}
+                <li>
+                  <a
+                    href="{{ rec.url }}"
+                    class="variant-swatch"
+                    aria-label="{{ rec.title }} — {{ color_label | default: 'Color option' }}"
+                  >
+                    <span
+                      class="variant-swatch__color"
+                      style="background-color: {{ color_value | strip | escape }};"
+                    ></span>
+                  </a>
+                </li>
+              {% endif %}
+            {% endunless %}
+          {% endfor %}
+        {% endif %}
+      </ul>
+    </div>
+
+    <style>
+      .product-variants-complementary__label {
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+
+      .product-variants-complementary__list {
+        display: flex;
+        gap: 6px;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+        flex-wrap: wrap;
+      }
+
+      .variant-swatch {
+        display: inline-flex;
+        padding: 2px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        text-decoration: none;
+      }
+
+      .variant-swatch--active {
+        border-color: black;
+      }
+
+      .variant-swatch__color {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        display: block;
+      }
+    </style>
+
+  {% endif %}
+</product-recommendations>
