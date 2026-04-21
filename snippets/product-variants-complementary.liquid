@@ -118,13 +118,28 @@
         {% endif %}
       </ul>
 
-      <script>
-        (function () {
-          var block = document.currentScript.closest('.product-variants-complementary');
-          if (!block) return;
-          block.classList.remove('is-hidden');
-        })();
-      </script>
+     <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('product-recommendations').forEach(function (el) {
+
+      // If already loaded (rare but safe)
+      if (el.innerHTML.trim() !== '') {
+        el.classList.remove('is-hidden');
+        return;
+      }
+
+      // Observe when Shopify injects content
+      const observer = new MutationObserver(function () {
+        if (el.innerHTML.trim() !== '') {
+          el.classList.remove('is-hidden');
+          observer.disconnect();
+        }
+      });
+
+      observer.observe(el, { childList: true, subtree: true });
+    });
+  });
+</script>
     </div>
 
     <style>
