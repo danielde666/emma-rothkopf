@@ -38,6 +38,7 @@
       </p>
 
       <ul class="product-variants-complementary__list" role="list">
+        <!-- CURRENT PRODUCT -->
         <li>
           <div
             class="variant-swatch variant-swatch--active"
@@ -50,6 +51,7 @@
           </div>
         </li>
 
+        <!-- COMPLEMENTARY PRODUCTS -->
         {% if recommendations.performed and recommendations.products_count > 0 %}
           {% for rec in recommendations.products %}
             {% unless rec.id == product.id %}
@@ -130,37 +132,43 @@
     </style>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        var containers = document.querySelectorAll('.product-variants-complementary__inner');
+      (function () {
+        var script = document.currentScript;
+        if (!script) return;
 
-        containers.forEach(function (container) {
-          var labelValue = container.querySelector('.product-variants-complementary__label-value');
-          if (!labelValue) return;
+        var container = script.previousElementSibling;
+        while (container && !container.classList.contains('product-variants-complementary__inner')) {
+          container = container.previousElementSibling;
+        }
+        if (!container) return;
 
-          var defaultLabel = container.dataset.currentColorLabel || labelValue.textContent.trim();
-          var swatches = container.querySelectorAll('.variant-swatch[data-color-label]');
+        var labelValue = container.querySelector('.product-variants-complementary__label-value');
+        if (!labelValue) return;
 
-          swatches.forEach(function (swatch) {
-            var hoverLabel = swatch.dataset.colorLabel || defaultLabel;
+        var defaultLabel = container.dataset.currentColorLabel || labelValue.textContent.trim();
 
-            swatch.addEventListener('mouseenter', function () {
-              labelValue.textContent = hoverLabel;
-            });
-
-            swatch.addEventListener('focus', function () {
-              labelValue.textContent = hoverLabel;
-            });
-
-            swatch.addEventListener('mouseleave', function () {
-              labelValue.textContent = defaultLabel;
-            });
-
-            swatch.addEventListener('blur', function () {
-              labelValue.textContent = defaultLabel;
-            });
-          });
+        container.addEventListener('mouseover', function (event) {
+          var swatch = event.target.closest('.variant-swatch[data-color-label]');
+          if (!swatch || !container.contains(swatch)) return;
+          labelValue.textContent = swatch.dataset.colorLabel || defaultLabel;
         });
-      });
+
+        container.addEventListener('mouseout', function (event) {
+          var swatch = event.target.closest('.variant-swatch[data-color-label]');
+          if (!swatch || !container.contains(swatch)) return;
+          labelValue.textContent = defaultLabel;
+        });
+
+        container.addEventListener('focusin', function (event) {
+          var swatch = event.target.closest('.variant-swatch[data-color-label]');
+          if (!swatch || !container.contains(swatch)) return;
+          labelValue.textContent = swatch.dataset.colorLabel || defaultLabel;
+        });
+
+        container.addEventListener('focusout', function () {
+          labelValue.textContent = defaultLabel;
+        });
+      })();
     </script>
   {% endif %}
 </product-recommendations>
