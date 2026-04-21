@@ -9,6 +9,7 @@
   {%- assign current_color_raw = product.metafields.custom.product_color -%}
   {%- assign current_color = '' -%}
   {%- assign current_color_label = '' -%}
+  {%- assign label_id = 'product-variants-color-label-' | append: section.id | append: '-' | append: block.id -%}
 
   {% if current_color_raw %}
     {% assign v = current_color_raw.value %}
@@ -27,18 +28,20 @@
   {% if current_color != blank %}
     <div
       class="product-variants-complementary__inner"
-      data-current-color-label="{{ current_color_label | default: 'Select' | escape }}"
       {{ block.shopify_attributes }}
     >
       <p class="product-variants-complementary__label">
         {{ block.settings.heading }}:
-        <span class="product-variants-complementary__label-value">
+        <span
+          id="{{ label_id }}"
+          class="product-variants-complementary__label-value"
+          data-default-label="{{ current_color_label | default: 'Select' | escape }}"
+        >
           {{ current_color_label | default: 'Select' }}
         </span>
       </p>
 
       <ul class="product-variants-complementary__list" role="list">
-        <!-- CURRENT PRODUCT -->
         <li>
           <div
             class="variant-swatch variant-swatch--active"
@@ -51,7 +54,6 @@
           </div>
         </li>
 
-        <!-- COMPLEMENTARY PRODUCTS -->
         {% if recommendations.performed and recommendations.products_count > 0 %}
           {% for rec in recommendations.products %}
             {% unless rec.id == product.id %}
@@ -78,8 +80,12 @@
                   <a
                     href="{{ rec.url }}"
                     class="variant-swatch"
-                    aria-label="{{ rec.title }} — {{ color_label | default: 'Color option' }}"
                     data-color-label="{{ color_label | default: 'Color option' | escape }}"
+                    aria-label="{{ rec.title }} — {{ color_label | default: 'Color option' }}"
+                    onmouseenter="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
+                    onmouseleave="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
+                    onfocus="document.getElementById('{{ label_id }}').textContent = this.dataset.colorLabel;"
+                    onblur="document.getElementById('{{ label_id }}').textContent = document.getElementById('{{ label_id }}').dataset.defaultLabel;"
                   >
                     <span
                       class="variant-swatch__color"
@@ -130,45 +136,5 @@
         box-sizing: border-box;
       }
     </style>
-
-    <script>
-      (function () {
-        var script = document.currentScript;
-        if (!script) return;
-
-        var container = script.previousElementSibling;
-        while (container && !container.classList.contains('product-variants-complementary__inner')) {
-          container = container.previousElementSibling;
-        }
-        if (!container) return;
-
-        var labelValue = container.querySelector('.product-variants-complementary__label-value');
-        if (!labelValue) return;
-
-        var defaultLabel = container.dataset.currentColorLabel || labelValue.textContent.trim();
-
-        container.addEventListener('mouseover', function (event) {
-          var swatch = event.target.closest('.variant-swatch[data-color-label]');
-          if (!swatch || !container.contains(swatch)) return;
-          labelValue.textContent = swatch.dataset.colorLabel || defaultLabel;
-        });
-
-        container.addEventListener('mouseout', function (event) {
-          var swatch = event.target.closest('.variant-swatch[data-color-label]');
-          if (!swatch || !container.contains(swatch)) return;
-          labelValue.textContent = defaultLabel;
-        });
-
-        container.addEventListener('focusin', function (event) {
-          var swatch = event.target.closest('.variant-swatch[data-color-label]');
-          if (!swatch || !container.contains(swatch)) return;
-          labelValue.textContent = swatch.dataset.colorLabel || defaultLabel;
-        });
-
-        container.addEventListener('focusout', function () {
-          labelValue.textContent = defaultLabel;
-        });
-      })();
-    </script>
   {% endif %}
 </product-recommendations>
