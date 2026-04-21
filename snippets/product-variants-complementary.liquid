@@ -118,22 +118,26 @@
         {% endif %}
       </ul>
 
-     <script>
+    <script>
   document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('product-recommendations').forEach(function (el) {
+    document.querySelectorAll('product-recommendations.product-variants-complementary').forEach(function (el) {
+      var timeoutId = null;
+      var observer = null;
 
-      // If already loaded (rare but safe)
-      if (el.innerHTML.trim() !== '') {
-        el.classList.remove('is-hidden');
-        return;
+      function revealWhenSettled() {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(function () {
+          el.classList.remove('is-hidden');
+          if (observer) observer.disconnect();
+        }, 30);
       }
 
-      // Observe when Shopify injects content
-      const observer = new MutationObserver(function () {
-        if (el.innerHTML.trim() !== '') {
-          el.classList.remove('is-hidden');
-          observer.disconnect();
-        }
+      if (el.innerHTML.trim() !== '') {
+        revealWhenSettled();
+      }
+
+      observer = new MutationObserver(function () {
+        revealWhenSettled();
       });
 
       observer.observe(el, { childList: true, subtree: true });
