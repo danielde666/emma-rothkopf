@@ -65,12 +65,10 @@
     "header": {
       "type": "header",
       "custom_css": [
-        ".header__menu-item span {letter-spacing: 1.1px;}",
-        ".header__menu-item span {font-size: 12px;}",
-        ".header__submenu .header__menu-item {justify-content: space-between; padding: 0.8rem 2.4rem; font-size: 1.2rem !important;}",
+        ".header__menu-item span {font-size: 10px; letter-spacing: 1.1px;}",
         ".header__icon--cart .icon {height: 100%;}",
-        ".header__submenu .header__menu-item {justify-content: space-between; padding: 0.8rem 2.4rem; font-size: 1.2rem !important; font-family: \"Arial\";}",
-        ".header-wrapper {background-color: transparent !important; margin-bottom: -88px;}"
+        ".header__submenu .header__menu-item {justify-content: space-between; padding: 0.8rem 2.4rem;}",
+        ".header-wrapper {background-color: rgba(255, 255, 255, 2) !important; margin-bottom: -88px; backdrop-filter: blur(13px); border-bottom: 1px solid rgba(255, 255, 255, 2);}"
       ],
       "settings": {
         "logo_position": "middle-center",
