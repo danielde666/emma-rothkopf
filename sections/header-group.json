@@ -66,9 +66,8 @@
       "type": "header",
       "custom_css": [
         ".header__menu-item span {font-size: 10px; letter-spacing: 1.1px;}",
-        ".header__icon--cart .icon {height: 100%;}",
-        ".header__submenu .header__menu-item {justify-content: space-between; padding: 0.8rem 2.4rem;}",
-        ".header-wrapper {background-color: transparent !important; margin-bottom: -88px; backdrop-filter: blur(13px); border-bottom: 1px solid rgba(255, 255, 255, 2);}"
+        ".header__submenu .header__menu-item {justify-content: space-between;}",
+        ".header-wrapper {background-color: rgba(255, 255, 255, 0.2) !important; margin-bottom: -88px; backdrop-filter: blur(13px); border-bottom: 1px solid rgba(255, 255, 255, 0.2);}"
       ],
       "settings": {
         "logo_position": "middle-center",
@@ -82,8 +81,8 @@
         "enable_language_selector": false,
         "mobile_logo_position": "center",
         "margin_bottom": 0,
-        "padding_top": 16,
-        "padding_bottom": 16
+        "padding_top": 0,
+        "padding_bottom": 0
       }
     },
     "d15b79d2-e774-45ab-91b7-5db7bdc5e885": {
